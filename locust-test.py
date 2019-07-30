@@ -10,15 +10,13 @@ headers = {
     'Content-Type': 'application/json',
 }
 data={"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}
-if os.environ.get("BASE_RPC_SERVER"):
-    response = requests.post(os.environ.get("BASE_RPC_SERVER"), headers=headers, json=data)
-else:
-    response = l.client.post("", json=data)
+response = requests.post(os.environ.get("BASE_RPC_SERVER", "https://eth.rpc.rivet.cloud/10f2a3dbcaa44fd998184ffbb8336f43"), headers=headers, json=data)
 
 print(response.content)
 latestBlock=int(response.json().get('result'),16)
 account_addresses = open("erc20_account_addresses").readlines()
 token_addresses = open("erc20_token_addresses").readlines()
+
 if os.environ.get("BASE_RPC_SERVER"):
     def run_request(l, data, name):
         baseserv=os.environ.get("BASE_RPC_SERVER")
