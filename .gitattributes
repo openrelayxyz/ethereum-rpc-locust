@@ -1,0 +1,2 @@
+erc20_account_addresses filter=lfs diff=lfs merge=lfs -text
+erc20_token_addresses filter=lfs diff=lfs merge=lfs -text
