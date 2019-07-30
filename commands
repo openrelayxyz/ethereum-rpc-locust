@@ -1,0 +1,8 @@
+locust -f locust-test.py --no-web --master --no-reset-stats --expect-slaves=4 --host=$TARGET_RPC_SERVER --no-web -c 1500 -r 25 --run-time 5m
+
+
+for((i=0;i<4;i++)); do /root/.local/bin/locust  -f locust-test.py --host=$TARGET_RPC_SERVER --no-web --slave & done
+
+
+consistency && truthiness testing:
+BASE_RPC_SERVER="$BASE_RPC_SERVER" locust -f locust-test.py --host=$TARGET_RPC_SERVER
