@@ -5,6 +5,7 @@ import random
 import argparse
 import sys
 import os
+import time
 
 headers = {
     'Content-Type': 'application/json',
@@ -84,6 +85,25 @@ def rand_block():
 @task(200)
 def get_block(l):
     run_request(l,  {"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}, name="eth_blockNumber")
+
+@task(1)
+def mempool_test(l):
+    result = l.client.post("", json={"jsonrpc":"2.0","method":"eth_newPendingTransactionFilter","params":[],"id":73})
+    subscriptionId = result.json()["result"]
+    for i in range(10):
+        changes = l.client.post("", json={"jsonrpc":"2.0","method":"eth_getFilterChanges","params":[subscriptionId],"id":73})
+        if changes.json().get("result"):
+            l.client.post("", json={"jsonrpc":"2.0","method":"eth_uninstallFilter","params":[subscriptionId],"id":73})
+            txHash = random.choice(changes.json()["result"])
+            hashData = l.client.post("", json={"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":[txHash],"id":73},name="eth_getTransactionByHash", catch_response=True)
+            if hashData.json().get("result", {}).get("hash") == txHash:
+                hashData.success()
+            else:
+                hashData.failure("Hash mismatch: %s" % hashData.content)
+        else:
+            time.sleep(.2)
+
+
 @task(1)
 def heavy_request(l):
         account_address1=random.choice(account_addresses)
@@ -123,7 +143,7 @@ def heavy_request(l):
         data = {"jsonrpc":"2.0","method":"eth_getBlockTransactionCountByNumber","params":[block_hex],"id":1}
         run_request(l, data, name="eth_getBlockTransactionCountByNumber")
 class RunTest(TaskSet):
-    tasks = {get_block: 200, heavy_request: 1}
+    tasks = {get_block: 200, heavy_request: 1, mempool_test: 1}
 class WebsiteUser(HttpLocust):
     task_set = RunTest
     min_wait = 50
