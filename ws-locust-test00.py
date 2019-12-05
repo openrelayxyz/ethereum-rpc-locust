@@ -124,8 +124,9 @@ class EchoTaskSet(TaskSet):
     def wait(self):
         time.sleep(10)
         # print("RUnninTAsk")
-        resp=self.ws.send(json.dumps({"jsonrpc":"2.0", "id": random.randint(0,sys.maxsize), "method": "eth_subscribe", "params": ["logs", {"topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"], "address": random.choice(token_addresses).strip()}]}))
-        self.sends.append(resp)
+        if len(sends) < 50:
+            resp=self.ws.send(json.dumps({"jsonrpc":"2.0", "id": random.randint(0,sys.maxsize), "method": "eth_subscribe", "params": ["logs", {"topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"], "address": random.choice(token_addresses).strip()}]}))
+            self.sends.append(resp)
         # print(resp)
         # print(self.sends)
 
