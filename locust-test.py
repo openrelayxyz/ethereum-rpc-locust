@@ -136,7 +136,7 @@ def heavy_request(l):
         run_request(l, data, name="eth_estimateGas2")
         data = {"jsonrpc":"2.0","method":"eth_estimateGas","params":[{"to": token_address.strip(), "data": f"0xdd62ed3e000000000000000000000000{account_address1.strip()[2:]}000000000000000000000000{account_address2.strip()[2:]}"}],"id":1}
         run_request(l, data, name="eth_estimateGas3")
-        data = {"jsonrpc":"2.0","method":"eth_getBalance","params":[account_address1.strip(), "latest"],"id":1}
+        data = {"jsonrpc":"2.0","method":"eth_getBalance","params":['0x'+account_address1.strip()[-40:], "latest"],"id":1}
         run_request(l, data, name="eth_getBalance")
         data = {"jsonrpc":"2.0","method":"eth_gasPrice","params":[],"id":1}
         run_request(l, data, name="eth_gasPrice")
