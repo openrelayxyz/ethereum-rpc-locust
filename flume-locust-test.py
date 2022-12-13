@@ -11,14 +11,14 @@ headers = {
     'Content-Type': 'application/json',
 }
 data={"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}
-response = requests.post(os.environ.get("BASE_RPC_SERVER", "https://eth.rpc.rivet.cloud/10f2a3dbcaa44fd998184ffbb8336f43"), headers=headers, json=data)
+response = requests.post(os.environ.get("BASE_RPC_SERVER", "https://sepolia.rpc.rivet.cloud/10f2a3dbcaa44fd998184ffbb8336f43"), headers=headers, json=data)
 
 print(response.content)
 latestBlock=int(response.json().get('result'),16)
-account_addresses = ['0x'+line.strip()[-40:] for line in open("erc20_account_addresses").readlines()]
-token_addresses = [line.strip() for line in open("erc20_token_addresses").readlines()]
-tx_hashes = [line.strip() for line in open("tx_hashes").readlines()]
-tx_hash_misses = [line.strip() for line in open("tx_hash_misses").readlines()]
+account_addresses = ['0x'+line.strip()[-40:] for line in open("polygon_erc20_account_addresses").readlines()]
+token_addresses = [line.strip() for line in open("polygon_token_addresses").readlines()]
+tx_hashes = [line.strip() for line in open("polygon_tx_hashes").readlines()]
+tx_hash_misses = [line.strip() for line in open("polygon_tx_hash_misses").readlines()]
 
 if os.environ.get("BASE_RPC_SERVER"):
     def run_request(l, data, name):
@@ -148,7 +148,7 @@ class WebsiteUser(HttpUser):
         data = {"jsonrpc":"2.0", "method": "eth_getLogs", "params": [{"fromBlock": block_hex, "toBlock": block_hex, "address": random.choice(token_addresses), "topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]}]}
 
         response = run_request(self, data, name="eth_getLogs_specific")
-        data = {"jsonrpc":"2.0", "method": "eth_getTransactionByHash", "params": [random.choice(tx_hashes)]}
+        data = {"jsonrpc":"2.0", "method": "eth_getTransactionByHash", "params": [random.choice(list(tx_hashes))]}
         response = run_request(self, data, name="eth_getTransactionByHash")
         data = {"jsonrpc":"2.0", "method": "eth_getTransactionByHash", "params": [random.choice(tx_hash_misses)]}
         response = run_request(self, data, name="eth_getTransactionByHash (miss)")
@@ -161,7 +161,7 @@ class WebsiteUser(HttpUser):
         response = run_request(self, data, name="eth_getTransactionByBlockHashAndIndex")
         data = {"jsonrpc":"2.0", "method": "eth_getTransactionByBlockNumberAndIndex", "params": [block_hex, hex(random.randint(0, txcount))]}
         response = run_request(self, data, name="eth_getTransactionByBlockNumberAndIndex")
-        data = {"jsonrpc":"2.0", "method": "eth_getTransactionReceipt", "params": [random.choice(tx_hashes)]}
+        data = {"jsonrpc":"2.0", "method": "eth_getTransactionReceipt", "params": [random.choice(list(tx_hashes))]}
         response = run_request(self, data, name="eth_getTransactionReceipt")
         data = {"jsonrpc":"2.0", "method": "eth_getBlockByNumber", "params": [block_hex, False]}
         response = run_request(self, data, name="eth_getBlockByNumber")

@@ -11,7 +11,7 @@ headers = {
     'Content-Type': 'application/json',
 }
 data={"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}
-response = requests.post(os.environ.get("BASE_RPC_SERVER", "https://eth.rpc.rivet.cloud/10f2a3dbcaa44fd998184ffbb8336f43"), headers=headers, json=data)
+response = requests.post(os.environ.get("BASE_RPC_SERVER", "https://sepolia.rpc.rivet.cloud/10f2a3dbcaa44fd998184ffbb8336f43"), headers=headers, json=data)
 
 print(response.content)
 latestBlock=int(response.json().get('result'),16)
