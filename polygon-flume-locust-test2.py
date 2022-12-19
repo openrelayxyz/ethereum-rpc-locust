@@ -59,6 +59,7 @@ class WebsiteUser(HttpUser):
         self.light_block_num = latestBlock
         self.light_block_hex = block_number
         self.light_block_hash = block_hash
+        self.light_64block_hash = ""
 
         self.heavy_session_tx_hashes = [*tx_hashes]
         self.heavy_session_senders = []
@@ -66,6 +67,7 @@ class WebsiteUser(HttpUser):
         self.heavy_block_num = latestBlock
         self.heavy_block_hex = block_number
         self.heavy_block_hash = block_hash
+        self.heavy_64block_hash = ""
         super(WebsiteUser, self).__init__(*args, **kwargs)
 
     ## flume standard eth methods
@@ -93,7 +95,10 @@ class WebsiteUser(HttpUser):
         self.light_block_hex=hex(self.light_block_num)
         data = {"jsonrpc":"2.0","method":f"{method}","params":[self.light_block_hex, True],"id":random.randint(0, 9999)}
         response = run_request(self, data, name=f"light_{method}")
-        self.light_block_hash = response.json().get('result')['hash']
+        if self.light_block_num % 64 == 0:
+            self.light_64block_hash = response.json().get('result')['hash']
+        else:
+            self.light_block_hash = response.json().get('result')['hash']
         transaction_hashes = [tx['hash'] for tx in response.json().get('result')['transactions']]
         recepients = [tx['to'] for tx in response.json().get('result')['transactions']]
         senders = [tx['from'] for tx in response.json().get('result')['transactions']]
@@ -205,92 +210,101 @@ class WebsiteUser(HttpUser):
         data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
         response = run_request(self, data, name=f"light_{method}")
 
-    # # # Polygon bor namespace methods
+    # # Polygon bor namespace methods
 
-    # # @task(weight=weight_object["bor_getSnapshot"] * light_coefficient)
-    # @task(weight=2000)
-    # def light_snapshot(self):
-    #     method = "bor_getSnapshot"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hex], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"light_{method} block")
+    # @task(weight=weight_object["bor_getSnapshot"] * light_coefficient)
+    @task(weight=2000)
+    def light_snapshot(self):
+        method = "bor_getSnapshot"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hex], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method} block")
 
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"light_{method} hash")
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method} hash")
 
-    # # @task(weight=weight_object["bor_getAuthor"] * light_coefficient)
-    # @task(weight=2000)
-    # def light_author(self):
-    #     method = "bor_getAuthor"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hex], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"light_{method}")
+    # @task(weight=weight_object["bor_getAuthor"] * light_coefficient)
+    @task(weight=2000)
+    def light_author(self):
+        method = "bor_getAuthor"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hex], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method}")
 
-    # # @task(weight=weight_object["bor_getRootHash"] * light_coefficient)
-    # @task(weight=2000)
-    # def light_rootHash(self):
-    #     method = "bor_getRootHash"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[(self.light_block_num - random.randint(0, 1000)), self.light_block_num], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"light_{method}")
+    # @task(weight=weight_object["bor_getRootHash"] * light_coefficient)
+    @task(weight=2000)
+    def light_rootHash(self):
+        method = "bor_getRootHash"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[(self.light_block_num - random.randint(0, 1000)), self.light_block_num], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method}")
 
-    # # @task(weight=weight_object["bor_getSignersAtHash"] * light_coefficient)
-    # @task(weight=2000)
-    # def light_rootHash(self):
-    #     method = "bor_getSignersAtHash"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"light_{method}")
+    @task(weight=weight_object["bor_getSignersAtHash"] * light_coefficient)
+    @task(weight=2000)
+    def light_signersAtHash(self):
+        method = "bor_getSignersAtHash"
+        print(method)
 
-    # # @task(weight=weight_object["bor_getCurrentValidators"] * light_coefficient)
-    # @task(weight=2000)
-    # def light_currentValidators(self):
-    #     method = "bor_getCurrentValidators"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"light_{method}")
+        if len(self.light_64block_hash) > 0:
+            data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_64block_hash], "id":random.randint(0, 9999)}
+            response = run_request(self, data, name=f"light_{method}")
+        else:
+            data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
+            response = run_request(self, data, name=f"light_{method} error")
 
-    # # @task(weight=weight_object["bor_getCurrentProposer"] * light_coefficient)
-    # @task(weight=2000)
-    # def light_currentProposer(self):
-    #     method = "bor_getCurrentProposer"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"light_{method}")
+    # @task(weight=weight_object["bor_getCurrentValidators"] * light_coefficient)
+    @task(weight=2000)
+    def light_currentValidators(self):
+        method = "bor_getCurrentValidators"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method}")
+
+    # @task(weight=weight_object["bor_getCurrentProposer"] * light_coefficient)
+    @task(weight=2000)
+    def light_currentProposer(self):
+        method = "bor_getCurrentProposer"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method}")
         
-    # # # Polygon eth namespace methods
+    # # Polygon eth namespace methods
 
-    # # @task(weight=weight_object["eth_getBorBlockReceipt"] * light_coefficient)
-    # @task(weight=2000)
-    # def light_borBlockReceipt(self):
-    #     method = "eth_getBorBlockReceipt"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"light_{method}")
+    # @task(weight=weight_object["eth_getBorBlockReceipt"] * light_coefficient)
+    @task(weight=2000)
+    def light_borBlockReceipt(self):
+        method = "eth_getBorBlockReceipt"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method}")
 
-    # # @task(weight=weight_object["eth_getTransactionReceiptsByBlock"] * light_coefficient)
-    # @task(weight=2000)
-    # def light_transactionReceiptsByBlock(self):
-    #     method = "eth_getTransactionReceiptsByBlock"
-    #     print(method)
+    # @task(weight=weight_object["eth_getTransactionReceiptsByBlock"] * light_coefficient)
+    @task(weight=2000)
+    def light_transactionReceiptsByBlock(self):
+        method = "eth_getTransactionReceiptsByBlock"
+        print(method)
 
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hex], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"light_{method} block")
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hex], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method} block")
 
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"light_{method} hash")
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method} hash")
 
     # Heavy calls
 
-    # @task(weight=weight_object["eth_getBlockByNumber"] * heavy_coefficient)
+    @task(weight=weight_object["eth_getBlockByNumber"] * heavy_coefficient)
     @task(1000)
     def heavy_blockByNumber(self):
         method = "eth_getBlockByNumber"
         print(method)
-        self.heavy_block_num=rand_light_block()
+        self.heavy_block_num=rand_heavy_block()
         self.heavy_block_hex=hex(self.heavy_block_num)
         data = {"jsonrpc":"2.0","method":f"{method}","params":[self.heavy_block_hex, True],"id":random.randint(0, 9999)}
         response = run_request(self, data, name=f"heavy_{method}")
+        if self.heavy_block_num % 64 == 0:
+            self.heavy_65block_hash = response.json().get('result')['hash']
+        else:
+            self.heavy_block_hash = response.json().get('result')['hash']
         self.heavy_block_hash = response.json().get('result')['hash']
         transaction_hashes = [tx['hash'] for tx in response.json().get('result')['transactions']]
         recepients = [tx['to'] for tx in response.json().get('result')['transactions']]
@@ -462,75 +476,80 @@ class WebsiteUser(HttpUser):
 
     # # # Polygon bor namespace methods
 
-    # # @task(weight=weight_object["bor_getSnapshot"] * heavy_coefficient)
-    # @task(weight=2000)
-    # def heavy_snapshot(self):
-    #     method = "bor_getSnapshot"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hex], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"heavy_{method} block")
+    # @task(weight=weight_object["bor_getSnapshot"] * heavy_coefficient)
+    @task(weight=2000)
+    def heavy_snapshot(self):
+        method = "bor_getSnapshot"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hex], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method} block")
 
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"heavy_{method} hash")
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method} hash")
 
-    # # @task(weight=weight_object["bor_getAuthor"] * heavy_coefficient)
-    # @task(weight=2000)
-    # def heavy_author(self):
-    #     method = "bor_getAuthor"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hex], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"heavy_{method}")
+    # @task(weight=weight_object["bor_getAuthor"] * heavy_coefficient)
+    @task(weight=2000)
+    def heavy_author(self):
+        method = "bor_getAuthor"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hex], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method}")
 
-    # # @task(weight=weight_object["bor_getRootHash"] * heavy_coefficient)
-    # @task(weight=2000)
-    # def heavy_rootHash(self):
-    #     method = "bor_getRootHash"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[(self.heavy_block_num - random.randint(0, 1000)), self.heavy_block_num], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"heavy_{method}")
+    # @task(weight=weight_object["bor_getRootHash"] * heavy_coefficient)
+    @task(weight=2000)
+    def heavy_rootHash(self):
+        method = "bor_getRootHash"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[(self.heavy_block_num - random.randint(0, 1000)), self.heavy_block_num], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method}")
 
-    # # @task(weight=weight_object["bor_getSignersAtHash"] * heavy_coefficient)
-    # @task(weight=2000)
-    # def heavy_rootHash(self):
-    #     method = "bor_getSignersAtHash"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"heavy_{method}")
+    @task(weight=weight_object["bor_getSignersAtHash"] * heavy_coefficient)
+    @task(weight=2000)
+    def heavy_getSignersAtHash(self):
+        method = "bor_getSignersAtHash"
+        print(method)
 
-    # # @task(weight=weight_object["bor_getCurrentValidators"] * heavy_coefficient)
-    # @task(weight=2000)
-    # def heavy_currentValidators(self):
-    #     method = "bor_getCurrentValidators"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"heavy_{method}")
+        if len(self.heavy_64block_hash) > 0:
+            data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_64block_hash], "id":random.randint(0, 9999)}
+            response = run_request(self, data, name=f"heavy_{method}")
+        else:
+            data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
+            response = run_request(self, data, name=f"heavy_{method} error")
 
-    # # @task(weight=weight_object["bor_getCurrentProposer"] * heavy_coefficient)
-    # @task(weight=2000)
-    # def heavy_currentProposer(self):
-    #     method = "bor_getCurrentProposer"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"heavy_{method}")
+    # @task(weight=weight_object["bor_getCurrentValidators"] * heavy_coefficient)
+    @task(weight=2000)
+    def heavy_currentValidators(self):
+        method = "bor_getCurrentValidators"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method}")
+
+    # @task(weight=weight_object["bor_getCurrentProposer"] * heavy_coefficient)
+    @task(weight=2000)
+    def heavy_currentProposer(self):
+        method = "bor_getCurrentProposer"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method}")
         
-    # # # Polygon eth namespace methods
+    # # Polygon eth namespace methods
 
-    # # @task(weight=weight_object["eth_getBorBlockReceipt"] * heavy_coefficient)
-    # @task(weight=2000)
-    # def heavy_borBlockReceipt(self):
-    #     method = "eth_getBorBlockReceipt"
-    #     print(method)
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"heavy_{method}")
+    # @task(weight=weight_object["eth_getBorBlockReceipt"] * heavy_coefficient)
+    @task(weight=2000)
+    def heavy_borBlockReceipt(self):
+        method = "eth_getBorBlockReceipt"
+        print(method)
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method}")
 
-    # # @task(weight=weight_object["eth_getTransactionReceiptsByBlock"] * heavy_coefficient)
-    # @task(weight=2000)
-    # def heavy_transactionReceiptsByBlock(self):
-    #     method = "eth_getTransactionReceiptsByBlock"
-    #     print(method)
+    # @task(weight=weight_object["eth_getTransactionReceiptsByBlock"] * heavy_coefficient)
+    @task(weight=2000)
+    def heavy_transactionReceiptsByBlock(self):
+        method = "eth_getTransactionReceiptsByBlock"
+        print(method)
 
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hex], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"heavy_{method} block")
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hex], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method} block")
 
-    #     data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
-    #     response = run_request(self, data, name=f"heavy_{method} hash")
+        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method} hash")
