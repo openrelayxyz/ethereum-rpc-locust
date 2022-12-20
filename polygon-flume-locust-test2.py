@@ -275,8 +275,12 @@ class WebsiteUser(HttpUser):
     def light_borBlockReceipt(self):
         method = "eth_getBorBlockReceipt"
         print(method)
-        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
-        response = run_request(self, data, name=f"light_{method}")
+        if len(self.light_64block_hash) > 0:
+            data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_64block_hash], "id":random.randint(0, 9999)}
+            response = run_request(self, data, name=f"light_{method}")
+        else:
+            data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hash], "id":random.randint(0, 9999)}
+            response = run_request(self, data, name=f"light_{method} error")
 
     # @task(weight=weight_object["eth_getTransactionReceiptsByBlock"] * light_coefficient)
     @task(weight=2000)
@@ -460,16 +464,16 @@ class WebsiteUser(HttpUser):
         data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
         response = run_request(self, data, name=f"heavy_{method}")
 
-    @task(weight=weight_object["flume_getERC20ByAccount"] * heavy_coefficient) ## default heavy
+    @task(weight=weight_object["flume_erc20ByAccount"] * heavy_coefficient) ## default heavy
     def heavy_eRC20ByAccount(self):
-        method = "flume_getERC20ByAccount"
+        method = "flume_erc20ByAccount"
         print(method)
         data = {"jsonrpc":"2.0","method": f"{method}","params":[random.choice(account_addresses)], "id":random.randint(0, 9999)}
         response = run_request(self, data, name=f"heavy_{method}")
 
-    @task(weight=weight_object["flume_getERC20Holders"] * heavy_coefficient) ## default heavy
+    @task(weight=weight_object["flume_erc20Holders"] * heavy_coefficient) ## default heavy
     def heavy_eRC20Holders(self):
-        method = "flume_getERC20Holders"
+        method = "flume_erc20Holders"
         print(method)
         data = {"jsonrpc":"2.0","method": f"{method}","params":[random.choice(account_addresses)], "id":random.randint(0, 9999)}
         response = run_request(self, data, name=f"heavy_{method}")
@@ -539,8 +543,13 @@ class WebsiteUser(HttpUser):
     def heavy_borBlockReceipt(self):
         method = "eth_getBorBlockReceipt"
         print(method)
-        data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
-        response = run_request(self, data, name=f"heavy_{method}")
+
+        if len(self.heavy_64block_hash) > 0:
+            data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_64block_hash], "id":random.randint(0, 9999)}
+            response = run_request(self, data, name=f"heavy_{method}")
+        else:
+            data = {"jsonrpc":"2.0","method": f"{method}","params":[self.heavy_block_hash], "id":random.randint(0, 9999)}
+            response = run_request(self, data, name=f"heavy_{method} error")
 
     # @task(weight=weight_object["eth_getTransactionReceiptsByBlock"] * heavy_coefficient)
     @task(weight=2000)
