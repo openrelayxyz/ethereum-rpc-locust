@@ -159,12 +159,21 @@ class WebsiteUser(HttpUser):
         data = {"jsonrpc":"2.0", "method": "eth_getTransactionReceipt", "params": [random.choice(tx_hash_misses)]}
         response = run_request(self, data, name="light_eth_getTransactionReceipt (miss)")
 
+    @task(weight=weight_object["eth_getTransactionCount"] * light_coefficient)
+    def light_transactionCount(self):
+        method = "eth_getTransactionCount"
+        if self.light_session_recipients + self.light_session_senders:
+            print(method)
+            data = {"jsonrpc":"2.0","method": f"{method}","params":[random.choice(self.light_session_recipients + self.light_session_senders)],"id":random.randint(0, 9999)}
+            response = run_request(self, data, name=f"light_{method}")
+    
     @task(weight=weight_object["eth_getUncleCountByBlockNumber"] * light_coefficient)
     def light_uncleCountByBlockNumber(self):
         method = "eth_getUncleCountByBlockNumber"
         print(method)
         data = {"jsonrpc":"2.0","method": f"{method}","params":[self.light_block_hex],"id":random.randint(0, 9999)}
         response = run_request(self, data, name=f"light_{method}")
+
 
     @task(weight=weight_object["eth_getUncleCountByBlockHash"] * light_coefficient)
     def light_uncleCountByBlockHash(self):
@@ -369,6 +378,14 @@ class WebsiteUser(HttpUser):
 
         data = {"jsonrpc":"2.0", "method": "eth_getTransactionReceipt", "params": [random.choice(tx_hash_misses)]}
         response = run_request(self, data, name="light_eth_getTransactionReceipt (miss)")
+
+    @task(weight=weight_object["eth_getTransactionCount"] * heavy_coefficient)
+    def light_transactionCount(self):
+        method = "eth_getTransactionCount"
+        if self.heavy_session_recipients + self.heavy_session_senders:
+            print(method)
+            data = {"jsonrpc":"2.0","method": f"{method}","params":[random.choice(self.heavy_session_recipients + self.heavy_session_senders)],"id":random.randint(0, 9999)}
+            response = run_request(self, data, name=f"heavy_{method}")
 
     @task(weight=weight_object["eth_getUncleCountByBlockNumber"] * heavy_coefficient)
     def heavy_uncleCountByBlockNumber(self):
