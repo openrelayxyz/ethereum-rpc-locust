@@ -116,9 +116,23 @@ class WebsiteUser(HttpUser):
     @task(weight=weight_object["eth_getLogs"] * light_coefficient)
     def light_getLogs(self):
         method = "eth_getLogs"
-        print(method)
+        print(method + "light var 1")
         data = {"jsonrpc":"2.0", "method": "eth_getLogs", "params": [{"fromBlock": hex(self.light_block_num - random.randint(0, 3)), "toBlock": hex(self.light_block_num), "address": random.choice(token_addresses), "topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]}],"id":random.randint(0, 9999)}
-        response = run_request(self, data, name=f"light_{method}")
+        response = run_request(self, data, name=f"light_{method} v1")
+
+    @task(weight=weight_object["eth_getLogs"] * light_coefficient)
+    def light_getLogs(self):
+        method = "eth_getLogs"
+        print(method + "light var 2")
+        data = {"jsonrpc":"2.0", "method": "eth_getLogs", "params": [{"fromBlock": hex(self.light_block_num), "toBlock": hex(self.light_block_num)}],"id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method} v2")
+
+    @task(weight=weight_object["eth_getLogs"] * light_coefficient)
+    def light_getLogs(self):
+        method = "eth_getLogs"
+        print(method + "light var 3")
+        data = {"jsonrpc":"2.0", "method": "eth_getLogs", "params": [{"fromBlock": hex(self.light_block_num), "toBlock": hex(self.light_block_num + 1)}],"id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"light_{method} v3")
 
     @task(weight=weight_object["eth_getTransactionByHash"] * light_coefficient)
     def light_transactionByHash(self):
@@ -336,9 +350,23 @@ class WebsiteUser(HttpUser):
     @task(weight=weight_object["eth_getLogs"] * heavy_coefficient)
     def heavy_getLogs(self):
         method = "eth_getLogs"
-        print(method)
+        print(method + "heavy var 1")
         data = {"jsonrpc":"2.0", "method": "eth_getLogs", "params": [{"fromBlock": hex(self.heavy_block_num - random.randint(0, 3)), "toBlock": hex(self.heavy_block_num), "address": random.choice(token_addresses), "topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]}],"id":random.randint(0, 9999)}
-        response = run_request(self, data, name=f"heavy_{method}")
+        response = run_request(self, data, name=f"heavy_{method} v1")
+
+    @task(weight=weight_object["eth_getLogs"] * heavy_coefficient)
+    def light_getLogs(self):
+        method = "eth_getLogs"
+        print(method + "heavy var 2")
+        data = {"jsonrpc":"2.0", "method": "eth_getLogs", "params": [{"fromBlock": hex(self.heavy_block_num), "toBlock": hex(self.heavy_block_num)}],"id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method} v2")
+
+    @task(weight=weight_object["eth_getLogs"] * heavy_coefficient)
+    def light_getLogs(self):
+        method = "eth_getLogs"
+        print(method + "heavy var 3")
+        data = {"jsonrpc":"2.0", "method": "eth_getLogs", "params": [{"fromBlock": hex(self.heavy_block_num), "toBlock": hex(self.heavy_block_num + 1)}],"id":random.randint(0, 9999)}
+        response = run_request(self, data, name=f"heavy_{method} v3")
 
     @task(weight=weight_object["eth_getTransactionByHash"] * heavy_coefficient)
     def heavy_transactionByHash(self):
