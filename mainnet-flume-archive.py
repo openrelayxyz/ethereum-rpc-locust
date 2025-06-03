@@ -2,7 +2,8 @@ from locust import HttpUser, TaskSet, task
 import requests
 import json
 import random
-import sys
+import sys, os, shutil
+import argparse
 from weights import *
 
 headers = {
@@ -12,6 +13,17 @@ data={"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["latest", False]
 response = requests.post("https://sepolia.rpc.rivet.cloud/baea23955a9a48a68bc75879b67e05e0", headers=headers, json=data)
 block_number = response.json().get('result')['number']
 block_hash = response.json().get('result')['hash']
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--blocknumber", type=int, required=True, help="separates archive and heavy ranges")
+args, unknown = parser.parse_known_args()
+sys.argv = [sys.argv[0]] + unknown
+
+cutoff_block = args.blocknumber
+
+if os.path.exists("results"):
+    shutil.rmtree("results")
+os.makedirs("results")
 
 
 # print(response.content)
@@ -43,10 +55,10 @@ def rand_light_block():
     return random.randint((latestBlock - 1024),latestBlock)
 
 def rand_heavy_block():
-    return random.randint(1000000, latestBlock)
+    return random.randint(cutoff_block, latestBlock)
 
 def rand_archive_block():
-    return random.randint(0, 1000000)
+    return random.randint(0, cutoff_block)
 
 
 weight_object = get_weight_object()
