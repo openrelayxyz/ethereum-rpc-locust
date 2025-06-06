@@ -15,7 +15,7 @@ block_number = response.json().get('result')['number']
 block_hash = response.json().get('result')['hash']
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--blocknumber", type=int, required=True, help="separates archive and heavy ranges")
+parser.add_argument("--blocknumber", type=int, required=True, help="separates light and heavy ranges")
 args, unknown = parser.parse_known_args()
 sys.argv = [sys.argv[0]] + unknown
 
@@ -61,7 +61,6 @@ weight_object = get_weight_object()
 
 light_coefficient = 9
 heavy_coefficient = 1
-archive_coefficient = 1
 
 class WebsiteUser(HttpUser):
     def __init__(self, *args, **kwargs):
@@ -451,10 +450,3 @@ class WebsiteUser(HttpUser):
         print(method)
         data = {"jsonrpc":"2.0","method": f"{method}","params":[random.choice(account_addresses)], "id":random.randint(0, 9999)}
         response = run_request(self, data, name=f"heavy_{method}")
-
-    @task(weight=weight_object["eth_getTransactionByHash"] * archive_coefficient)
-    def archive_transactionByHash(self):
-        method = "eth_getTransactionByHash"
-        print(method)
-        data = {"jsonrpc":"2.0", "method": f"{method}", "params": [random.choice(tx_hash_misses)]}
-        response = run_request(self, data, name=f"light_{method} (miss)")
